@@ -238,6 +238,87 @@
             color: #40A7DD;
         }
         
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 16px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            color: #f39c12;
+        }
+        
+        .modal-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .modal-body {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 25px;
+        }
+        
+        .modal-close {
+            background: linear-gradient(135deg, #40A7DD 0%, #369bb8 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Lato', sans-serif;
+            float: right;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(64, 167, 221, 0.4);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
         /* Responsive Design */
         @media (max-width: 768px) {
             body {
@@ -263,6 +344,12 @@
             
             .chart-container {
                 height: 350px;
+                padding: 20px;
+            }
+            
+            .modal-content {
+                width: 90%;
+                margin: 20% auto;
                 padding: 20px;
             }
         }
@@ -292,27 +379,27 @@
         <div class="inputs-section">
             <div class="input-group">
                 <label for="current-age">Current Age</label>
-                <input type="number" id="current-age" value="35" min="18" max="100">
+                <input type="number" id="current-age" placeholder="Enter your current age" min="18" max="100">
             </div>
             
             <div class="input-group">
                 <label for="retirement-age">Retirement Age</label>
-                <input type="number" id="retirement-age" value="65" min="50" max="100">
+                <input type="number" id="retirement-age" placeholder="Enter planned retirement age" min="50" max="100">
             </div>
             
             <div class="input-group">
                 <label for="total-value">Total Portfolio Value ($)</label>
-                <input type="number" id="total-value" value="1000000" min="0" step="1000">
+                <input type="number" id="total-value" placeholder="Enter total portfolio value" min="0" step="1000">
             </div>
             
             <div class="input-group">
                 <label for="desiredCashFlow">Desired Annual Income ($)</label>
-                <input type="number" id="desiredCashFlow" value="40000" min="0" step="1000">
+                <input type="number" id="desiredCashFlow" placeholder="Enter desired annual income" min="0" step="1000">
             </div>
             
             <div class="input-group">
                 <label for="annual-rate">Annual Growth Rate (%)</label>
-                <input type="number" id="annual-rate" value="7" min="0" max="20" step="0.1">
+                <input type="number" id="annual-rate" value="5" min="0" max="20" step="0.1">
             </div>
             
             <div class="input-group">
@@ -322,6 +409,27 @@
         </div>
         
         <button onclick="calculateCashFlow()">Calculate Cash Flow</button>
+    </div>
+    
+    <!-- Warning Modal -->
+    <div id="warningModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-icon">⚠️</span>
+                <h2 class="modal-title">Important Disclaimer</h2>
+            </div>
+            <div class="modal-body">
+                <p>This calculator provides estimates based on the assumptions you've entered. Your actual retirement cash flow may vary significantly due to factors such as:</p>
+                <ul>
+                    <li>Market volatility and economic conditions</li>
+                    <li>Changes in tax laws and rates</li>
+                    <li>Healthcare costs and unexpected expenses</li>
+                    <li>Inflation variations over time</li>
+                </ul>
+                <p><strong>Please consult with a qualified financial advisor for personalized retirement planning advice.</strong></p>
+            </div>
+            <button class="modal-close" onclick="closeModal()">I Understand</button>
+        </div>
     </div>
     
     <div id="shortfallToggle" style="display: none;">
@@ -353,10 +461,19 @@
         let calculationData = {}; // Store calculation results
 
         function calculateCashFlow() {
-            const totalValue = parseFloat(document.getElementById('total-value').value);
+            // Validate inputs
+            const currentAge = parseInt(document.getElementById('current-age').value);
             const retirementAge = parseInt(document.getElementById('retirement-age').value);
+            const totalValue = parseFloat(document.getElementById('total-value').value);
+            const desiredCashFlow = parseFloat(document.getElementById('desiredCashFlow').value);
             const annualRate = parseFloat(document.getElementById('annual-rate').value) / 100;
             const inflationRate = parseFloat(document.getElementById('inflation-rate').value) / 100;
+            
+            // Check if all required fields are filled
+            if (isNaN(currentAge) || isNaN(retirementAge) || isNaN(totalValue) || isNaN(desiredCashFlow)) {
+                alert('Please fill in all required fields.');
+                return;
+            }
             
             // Calculate both sustainable and year-over-year data
             calculationData = {
@@ -378,6 +495,25 @@
             
             // Display current view
             displayCurrentView();
+            
+            // Show warning modal
+            showModal();
+        }
+
+        function showModal() {
+            document.getElementById('warningModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('warningModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('warningModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
         }
 
         function toggleView() {
@@ -658,11 +794,6 @@
                 tableBody.appendChild(row);
             }
         }
-
-        // Initialize with default calculation
-        window.addEventListener('load', function() {
-            calculateCashFlow();
-        });
     </script>
 </body>
 </html>
